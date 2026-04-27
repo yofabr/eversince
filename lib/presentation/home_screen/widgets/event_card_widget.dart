@@ -26,7 +26,10 @@ class EventCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final elapsed = now.difference(event.startDateTime);
+    final isFuture = event.startDateTime.isAfter(now);
+    final duration = isFuture
+        ? event.startDateTime.difference(now)
+        : now.difference(event.startDateTime);
     final accent = _accentColors[event.colorIndex % _accentColors.length];
 
     final cardContent = Container(
@@ -90,6 +93,26 @@ class EventCardWidget extends StatelessWidget {
                     ],
                   ],
                 ),
+                // Future / Past flag badge
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  color: isFuture
+                      ? const Color(0xFF000000)
+                      : const Color(0xFFF5FF00),
+                  child: Text(
+                    isFuture ? 'TIME LEFT' : 'TIME SINCE',
+                    style: GoogleFonts.sora(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: isFuture ? Colors.white : const Color(0xFF000000),
+                      letterSpacing: 1.4,
+                    ),
+                  ),
+                ),
                 if (event.description.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -105,14 +128,14 @@ class EventCardWidget extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 20),
-                // Primary elapsed value — large monospace
-                _PrimaryElapsed(elapsed: elapsed),
+                // Primary value — large monospace
+                _PrimaryDuration(duration: duration, isFuture: isFuture),
                 const SizedBox(height: 16),
                 // Divider
                 Container(height: 1, color: const Color(0xFFE0E0E0)),
                 const SizedBox(height: 14),
                 // Breakdown row
-                _ElapsedBreakdownRow(elapsed: elapsed),
+                _DurationBreakdownRow(duration: duration),
               ],
             ),
           ),
@@ -230,10 +253,11 @@ class EventCardWidget extends StatelessWidget {
   }
 }
 
-class _PrimaryElapsed extends StatelessWidget {
-  final Duration elapsed;
+class _PrimaryDuration extends StatelessWidget {
+  final Duration duration;
+  final bool isFuture;
 
-  const _PrimaryElapsed({required this.elapsed});
+  const _PrimaryDuration({required this.duration, required this.isFuture});
 
   @override
   Widget build(BuildContext context) {
@@ -241,37 +265,37 @@ class _PrimaryElapsed extends StatelessWidget {
     final String primaryValue;
     final String primaryUnit;
 
-    if (elapsed.inDays >= 365) {
-      final years = elapsed.inDays ~/ 365;
-      final remDays = elapsed.inDays % 365;
+    if (duration.inDays >= 365) {
+      final years = duration.inDays ~/ 365;
+      final remDays = duration.inDays % 365;
       final months = remDays ~/ 30;
       primaryValue = years.toString();
       primaryUnit = years == 1 ? 'year' : 'years';
       primaryLabel = months > 0
           ? '+ $months ${months == 1 ? "month" : "months"}'
           : '';
-    } else if (elapsed.inDays >= 30) {
-      final months = elapsed.inDays ~/ 30;
-      final remDays = elapsed.inDays % 30;
+    } else if (duration.inDays >= 30) {
+      final months = duration.inDays ~/ 30;
+      final remDays = duration.inDays % 30;
       primaryValue = months.toString();
       primaryUnit = months == 1 ? 'month' : 'months';
       primaryLabel = remDays > 0
           ? '+ $remDays ${remDays == 1 ? "day" : "days"}'
           : '';
-    } else if (elapsed.inDays >= 1) {
-      primaryValue = elapsed.inDays.toString();
-      primaryUnit = elapsed.inDays == 1 ? 'day' : 'days';
+    } else if (duration.inDays >= 1) {
+      primaryValue = duration.inDays.toString();
+      primaryUnit = duration.inDays == 1 ? 'day' : 'days';
       primaryLabel = '';
-    } else if (elapsed.inHours >= 1) {
-      primaryValue = elapsed.inHours.toString();
-      primaryUnit = elapsed.inHours == 1 ? 'hour' : 'hours';
+    } else if (duration.inHours >= 1) {
+      primaryValue = duration.inHours.toString();
+      primaryUnit = duration.inHours == 1 ? 'hour' : 'hours';
       primaryLabel = '';
-    } else if (elapsed.inMinutes >= 1) {
-      primaryValue = elapsed.inMinutes.toString();
-      primaryUnit = elapsed.inMinutes == 1 ? 'minute' : 'minutes';
+    } else if (duration.inMinutes >= 1) {
+      primaryValue = duration.inMinutes.toString();
+      primaryUnit = duration.inMinutes == 1 ? 'minute' : 'minutes';
       primaryLabel = '';
     } else {
-      primaryValue = elapsed.inSeconds.toString();
+      primaryValue = duration.inSeconds.toString();
       primaryUnit = 'seconds';
       primaryLabel = '';
     }
@@ -318,19 +342,19 @@ class _PrimaryElapsed extends StatelessWidget {
   }
 }
 
-class _ElapsedBreakdownRow extends StatelessWidget {
-  final Duration elapsed;
+class _DurationBreakdownRow extends StatelessWidget {
+  final Duration duration;
 
-  const _ElapsedBreakdownRow({required this.elapsed});
+  const _DurationBreakdownRow({required this.duration});
 
   @override
   Widget build(BuildContext context) {
-    final totalSeconds = elapsed.inSeconds;
-    final years = elapsed.inDays ~/ 365;
-    final months = (elapsed.inDays % 365) ~/ 30;
-    final days = elapsed.inDays % 30;
-    final hours = elapsed.inHours % 24;
-    final minutes = elapsed.inMinutes % 60;
+    final totalSeconds = duration.inSeconds;
+    final years = duration.inDays ~/ 365;
+    final months = (duration.inDays % 365) ~/ 30;
+    final days = duration.inDays % 30;
+    final hours = duration.inHours % 24;
+    final minutes = duration.inMinutes % 60;
     final seconds = totalSeconds % 60;
 
     return Wrap(

@@ -119,7 +119,7 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: background,
     textTheme: _buildTextTheme(),
-    appBarTheme: AppBarTheme(
+    appBarTheme: AppBarThemeData(
       backgroundColor: background,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -158,7 +158,7 @@ class AppTheme {
       height: 64,
       elevation: 0,
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       filled: false,
       border: const UnderlineInputBorder(
         borderSide: BorderSide(color: border, width: 2),
@@ -279,7 +279,7 @@ class AppTheme {
         ),
       ),
     ),
-    appBarTheme: AppBarTheme(
+    appBarTheme: AppBarThemeData(
       backgroundColor: const Color(0xFF0A0A0A),
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -318,7 +318,7 @@ class AppTheme {
       height: 64,
       elevation: 0,
     ),
-    inputDecorationTheme: InputDecorationTheme(
+    inputDecorationTheme: InputDecorationThemeData(
       filled: false,
       border: const UnderlineInputBorder(
         borderSide: BorderSide(color: surface, width: 2),

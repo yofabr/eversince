@@ -62,7 +62,7 @@ class _AddEventFormWidgetState extends State<AddEventFormWidget> {
       context: context,
       initialDate: _selectedDateTime,
       firstDate: DateTime(1900),
-      lastDate: now,
+      lastDate: DateTime(2100),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
           colorScheme: const ColorScheme.light(
