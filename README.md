@@ -6,4 +6,4 @@ A personal Android app to track how long until — or how long since — the mom
 
 ---
 
-*Vibecoded with using [Rocket.new](https://rocket.new)*
+*Vibecoded using [Rocket.new](https://rocket.new)*
