@@ -1,0 +1,90 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # Triggers on version tags like v1.0.0, v2.3.1, etc.
+
+jobs:
+  build:
+    name: Build APK & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Java 17 (required by Android Gradle) ────────────────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # ── 3. Flutter (latest stable — ships Dart ≥3.9 as required) ──────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── 4. Inject env.json from GitHub Secrets ─────────────────────────────
+      # Each key in env.json must be added as a GitHub repository secret.
+      # Go to: Settings → Secrets and variables → Actions → New repository secret
+      - name: Write env.json
+        run: |
+          cat > env.json <<EOF
+          {
+            "SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
+            "SUPABASE_ANON_KEY": "${{ secrets.SUPABASE_ANON_KEY }}",
+            "OPENAI_API_KEY": "${{ secrets.OPENAI_API_KEY }}",
+            "GEMINI_API_KEY": "${{ secrets.GEMINI_API_KEY }}",
+            "ANTHROPIC_API_KEY": "${{ secrets.ANTHROPIC_API_KEY }}",
+            "PERPLEXITY_API_KEY": "${{ secrets.PERPLEXITY_API_KEY }}",
+            "GOOGLE_WEB_CLIENT_ID": "${{ secrets.GOOGLE_WEB_CLIENT_ID }}"
+          }
+          EOF
+
+      # ── 5. Install dependencies ────────────────────────────────────────────
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── 6. Build release APKs (split per ABI = smaller downloads) ──────────
+      - name: Build release APK
+        run: flutter build apk --release --split-per-abi
+
+      # ── 7. Rename APKs to include version tag ──────────────────────────────
+      - name: Rename APKs
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          cd build/app/outputs/flutter-apk/
+          for f in app-*-release.apk; do
+            # e.g. app-arm64-v8a-release.apk → eversince-v1.0.0-arm64-v8a.apk
+            ARCH=$(echo "$f" | sed 's/app-//' | sed 's/-release.apk//')
+            mv "$f" "eversince-${VERSION}-${ARCH}.apk"
+          done
+
+      # ── 8. Create GitHub Release & upload APKs ─────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Eversince ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## 📦 Download
+
+            | Architecture | Download |
+            |---|---|
+            | arm64-v8a *(modern phones, recommended)* | `eversince-${{ github.ref_name }}-arm64-v8a.apk` |
+            | armeabi-v7a *(older 32-bit phones)* | `eversince-${{ github.ref_name }}-armeabi-v7a.apk` |
+            | x86_64 *(emulators / x86 devices)* | `eversince-${{ github.ref_name }}-x86_64.apk` |
+
+            > **Not sure which to pick?** Download the `arm64-v8a` APK — it works on 99% of modern Android phones.
+          files: |
+            build/app/outputs/flutter-apk/eversince-*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
